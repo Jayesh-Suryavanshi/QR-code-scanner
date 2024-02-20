@@ -1,0 +1,40 @@
+bash : pip install opencv-python-headless opencv-python-contrib pyzbar
+code : 
+import cv2
+from pyzbar.pyzbar import decode
+import tkinter as tk
+from tkinter import messagebox
+from PIL import Image, ImageTk
+
+class QRScannerApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("QR Code Scanner")
+
+        self.camera = cv2.VideoCapture(0)
+        _, self.frame = self.camera.read()
+
+        self.canvas = tk.Canvas(root, width=self.frame.shape[1], height=self.frame.shape[0])
+        self.canvas.pack()
+
+        self.scan_qr_code()
+
+    def scan_qr_code(self):
+        _, frame = self.camera.read()
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        decoded_objects = decode(frame)
+        if decoded_objects:
+            for obj in decoded_objects:
+                data = obj.data.decode("utf-8")
+                messagebox.showinfo("QR Code Detected", f"QR Code data: {data}")
+                break  # Only show the first QR code detected
+
+        self.photo = ImageTk.PhotoImage(image=Image.fromarray(frame))
+        self.canvas.create_image(0, 0, image=self.photo, anchor=tk.NW)
+        self.root.after(10, self.scan_qr_code)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = QRScannerApp(root)
+    root.mainloop()
